@@ -37,7 +37,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.lang.Math;
 
 public class TestActivity extends AppCompatActivity{
 
@@ -605,132 +604,141 @@ public class TestActivity extends AppCompatActivity{
     public void borderNeighbour(){
         int totalBlur = 1;
         Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
         int ImgWidth = tempBitmap.getWidth();
         int ImgHeight = tempBitmap.getHeight();
         int cellSize = (2*totalBlur) + 1;
-        int counter, totalRed = 0, totalGreen = 0, totalBlue = 0;
 
         for (int i = 0; i < ImgWidth; i++) {
             for (int j = 0; j < ImgHeight; j++) {
                 //Check for neighbour
-                counter = 0;
-                int Red = 0, Green = 0, Blue = 0,MaxDiffRed = 0, MaxDiffGreen = 0, MaxDiffBlue = 0;
+                int Red , Green , Blue , Grayscale,MaxDiffGrayscale = 0;
 
 
-                //Log.d("Pixel",String.valueOf(i) + "," + String.valueOf(j));
-                int neighbourX = 0;
-                while (((i-totalBlur + neighbourX ) > 0 ) || ((i+ neighbourX ) <= ImgWidth ) || counter < 4  ){
-                    int neighbourY = 0;
-                    while ( ((j-totalBlur + neighbourY) < 0 )  || ((j+ neighbourY ) >= ImgHeight ) || counter < 4 ){
-
-                            if (neighbourX != 1 && neighbourY != 1) {
-                                //Log.d("test counter", String.valueOf(counter));
-
-                                if (((i-totalBlur + neighbourX ) < 0 ) || ((j-totalBlur + neighbourY) < 0 ) || ((i+ neighbourX ) >= ImgWidth ) || ((j+ neighbourY ) >= ImgHeight ) ){
-                                    //not valid neighbour
-                                    //Log.d("Test","0");
-                                } else {
-
-                                    int opposite = tempBitmap.getPixel(i - totalBlur + neighbourX, j - totalBlur + neighbourY);
-                                    int pixelNeighbour = tempBitmap.getPixel(j - totalBlur + neighbourY, i - totalBlur + neighbourX);
-                                    int diffRed = Math.abs(Color.red(opposite) - Color.red(pixelNeighbour));
-                                    if (diffRed >= MaxDiffRed) {
-                                        MaxDiffRed = diffRed;
-                                    }
-                                    //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
-                                    int diffGreen = Math.abs(Color.green(opposite) - Color.green(pixelNeighbour));
-                                    if (diffGreen >= MaxDiffGreen) {
-                                        MaxDiffGreen = diffGreen;
-                                    }
-                                    //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
-                                    int diffBlue = Math.abs(Color.blue(opposite) - Color.blue(pixelNeighbour));
-                                    if (diffBlue >= MaxDiffBlue) {
-                                        MaxDiffBlue = diffBlue;
-                                    }
-                                }
-                            }
-                            neighbourY++;
-
-                            counter++;
+                //Do it for the first row minus third row of the 3x3 matrix
+                for(int neighbourX = 0; neighbourX < cellSize; neighbourX++){
+                        //check for validity else fill with the extended from the other side for X side
+                        int coordX, coordY, coord2Y;
+                        if (((i-totalBlur + neighbourX ) < 0 )) {
+                            coordX = ImgWidth - 1;
+                        } else if ((i+ neighbourX ) >= ImgWidth ){
+                            coordX = 0;
+                        } else {
+                            coordX = i - totalBlur + neighbourX;
                         }
-                        neighbourX++;
-                    }
+                        //check for validity else fill with the extended from the other side for Y side
+                        if((j-totalBlur ) < 0 ){
+                            coordY = ImgHeight - 1;
+                        } else if ((j) >= ImgHeight ){
+                            coordY = 0;
+                        } else {
+                            coordY = j-totalBlur;
+                        }
+                        coord2Y = coordY + 1;
+                        if(coord2Y >= ImgHeight){
+                            coord2Y = 0;
+                        }
+                        //count the diff
+                        int CurrPix = tempBitmap.getPixel(coordX,coord2Y);
+                        Red = Color.red(CurrPix);
+                        Green = Color.green(CurrPix);
+                        Blue = Color.blue(CurrPix);
+                        Grayscale = (int) (0.299 * Red + 0.587 * Green + 0.114 * Blue);
+                        //Log.d("test counter", String.valueOf(counter));
+                        int pixelNeighbour = tempBitmap.getPixel(coordX, coordY);
+                        int diffRed = Color.red(pixelNeighbour);
+                        //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
+                        int diffGreen = Color.green(pixelNeighbour);
+                        //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
+                        int diffBlue = Color.blue(pixelNeighbour);
+                        int tempGrayscale = (int) (0.299 * diffRed + 0.587 * diffGreen + 0.114 * diffBlue);
+                        int currDiff = Math.abs(tempGrayscale - Grayscale);
+                        if (currDiff >= MaxDiffGrayscale) {
+                            MaxDiffGrayscale = currDiff;
+                        }
 
-                    //Log.d("NewColor", "R:" + String.valueOf(avgRed) +",G:" + String.valueOf(avgGreen) +",B:" + String.valueOf(avgBlue) );
-                    Color NewColour = new Color();
-                    int pixel = NewColour.rgb(MaxDiffRed, MaxDiffGreen, MaxDiffBlue);
-                    tempBitmap.setPixel(i, j, pixel);
                 }
+                Color NewColour = new Color();
+                int pixel = NewColour.rgb(MaxDiffGrayscale, MaxDiffGrayscale, MaxDiffGrayscale);
+                resBitmap.setPixel(i, j, pixel);
             }
+        }
         Log.d("Finish", "Border Neighbour finished");
-        imgIdentitas.setImageBitmap(tempBitmap);
-        drawHistogram(tempBitmap);
+        imgIdentitas.setImageBitmap(resBitmap);
+        drawHistogram(resBitmap);
     }
 
     public void borderCenter(){
         int totalBlur = 1;
         Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
         int ImgWidth = tempBitmap.getWidth();
         int ImgHeight = tempBitmap.getHeight();
-        int[] pix = new int[ImgWidth * ImgHeight];
         int cellSize = (2*totalBlur) + 1;
-        int counter;
 
         for (int i = 0; i < ImgWidth; i++) {
             for (int j = 0; j < ImgHeight; j++) {
                 //Check for neighbour
-                counter = 0;
                 int CurrPix = tempBitmap.getPixel(i,j);
-                int Red = 0, Green = 0, Blue = 0,MaxDiffRed = 0, MaxDiffGreen = 0, MaxDiffBlue = 0;
+                int Red , Green , Blue , Grayscale,MaxDiffGrayscale = 0;
                 Red = Color.red(CurrPix);
-                Green = Green + Color.green(CurrPix);
-                Blue = Blue + Color.blue(CurrPix);
+                Green = Color.green(CurrPix);
+                Blue = Color.blue(CurrPix);
+                Grayscale = (int) (0.299 * Red + 0.587 * Green + 0.114 * Blue);
 
                 //Log.d("Pixel",String.valueOf(i) + "," + String.valueOf(j));
                 for(int neighbourX = 0; neighbourX < cellSize; neighbourX++){
                     for(int neighbourY = 0; neighbourY < cellSize; neighbourY++){
-                        //check for validity else fill with 0 and ignore
-                        if (((i-totalBlur + neighbourX ) < 0 ) || ((j-totalBlur + neighbourY) < 0 ) || ((i+ neighbourX ) >= ImgWidth ) || ((j+ neighbourY ) >= ImgHeight ) ){
-                            //not valid neighbour
-                            //Log.d("Test","0");
+                        //check for validity else fill with the extended from the other side for X side
+                        int coordX, coordY;
+                        if (((i-totalBlur + neighbourX ) < 0 )) {
+                            coordX = ImgWidth - 1;
+                        } else if ((i+ neighbourX ) >= ImgWidth ){
+                            coordX = 0;
                         } else {
+                            coordX = i - totalBlur + neighbourX;
+                        }
+                        //check for validity else fill with the extended from the other side for Y side
+                        if((j-totalBlur + neighbourY) < 0 ){
+                            coordY = ImgHeight - 1;
+                        } else if ((j+ neighbourY ) >= ImgHeight ){
+                            coordY = 0;
+                        } else {
+                            coordY = j-totalBlur + neighbourY;
+                        }
+
+                            //count the diff
                             if (neighbourX != 1 && neighbourY != 1) {
                                 //Log.d("test counter", String.valueOf(counter));
-                                int pixelNeighbour = tempBitmap.getPixel(i - totalBlur + neighbourX, j - totalBlur + neighbourY);
-                                int diffRed = Math.abs(Red - Color.red(pixelNeighbour));
-                                if (diffRed >= MaxDiffRed){
-                                    MaxDiffRed = diffRed;
-                                }
+                                int pixelNeighbour = tempBitmap.getPixel(coordX, coordY);
+                                int diffRed = Color.red(pixelNeighbour);
                                 //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
-                                int diffGreen = Math.abs (Green - Color.green(pixelNeighbour));
-                                if (diffGreen >= MaxDiffGreen){
-                                    MaxDiffGreen = diffGreen;
-                                }
+                                int diffGreen = Color.green(pixelNeighbour);
                                 //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
-                                int diffBlue =Math.abs( Blue - Color.blue(pixelNeighbour));
-                                if (diffBlue >= MaxDiffBlue){
-                                    MaxDiffBlue = diffBlue;
+                                int diffBlue = Color.blue(pixelNeighbour);
+                                int tempGrayscale = (int) (0.299 * diffRed + 0.587 * diffGreen + 0.114 * diffBlue);
+                                int currDiff = Math.abs(tempGrayscale - Grayscale);
+                                if (currDiff >= MaxDiffGrayscale){
+                                    MaxDiffGrayscale = currDiff;
                                 }
-                                //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
-                                counter = counter + 1;
                             }
-                        }
+
                     }
                 }
-                //Log.d("NewColor", "R:" + String.valueOf(avgRed) +",G:" + String.valueOf(avgGreen) +",B:" + String.valueOf(avgBlue) );
                 Color NewColour = new Color();
-                int pixel = NewColour.rgb(MaxDiffRed, MaxDiffGreen, MaxDiffBlue);
-                tempBitmap.setPixel(i, j, pixel);
+                int pixel = NewColour.rgb(MaxDiffGrayscale, MaxDiffGrayscale, MaxDiffGrayscale);
+                resBitmap.setPixel(i, j, pixel);
             }
         }
         Log.d("Finish", "Border Center finished");
-        imgIdentitas.setImageBitmap(tempBitmap);
-        drawHistogram(tempBitmap);
+        imgIdentitas.setImageBitmap(resBitmap);
+        drawHistogram(resBitmap);
     }
 
     public void sharpenImage(){
         int totalBlur = 1;
         Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
         int ImgWidth = tempBitmap.getWidth();
         int ImgHeight = tempBitmap.getHeight();
         int[] pix = new int[ImgWidth * ImgHeight];
@@ -793,27 +801,31 @@ public class TestActivity extends AppCompatActivity{
                 //normalize color
                 if (totalBlue < 0){
                     totalBlue = 0;
-                } else if (totalGreen < 0){
+                }
+                if (totalGreen < 0){
                     totalGreen = 0;
-                } else if (totalRed < 0) {
+                }
+                if (totalRed < 0) {
                     totalRed = 0;
                 }
 
                 if (totalBlue >255){
                     totalBlue = 255;
-                } else if (totalGreen >255){
+                }
+                if (totalGreen >255){
                     totalGreen = 255;
-                } else if (totalRed >255) {
+                }
+                if (totalRed >255) {
                     totalRed = 255;
                 }
                 Color NewColour = new Color();
                 int pixel = NewColour.rgb(totalRed, totalGreen, totalBlue);
-                tempBitmap.setPixel(i, j, pixel);
+                resBitmap.setPixel(i, j, pixel);
             }
         }
         Log.d("Finish", "Sharpen finished");
-        imgIdentitas.setImageBitmap(tempBitmap);
-        drawHistogram(tempBitmap);
+        imgIdentitas.setImageBitmap(resBitmap);
+        drawHistogram(resBitmap);
     }
 
     public void blurImage(){
@@ -835,43 +847,55 @@ public class TestActivity extends AppCompatActivity{
                 for(int neighbourX = 0; neighbourX < cellSize; neighbourX++){
                     for(int neighbourY = 0; neighbourY < cellSize; neighbourY++){
                         //check for validity else fill with 0 and ignore
-                        if (((i-totalBlur + neighbourX ) < 0 ) || ((j-totalBlur + neighbourY) < 0 ) || ((i+ neighbourX ) >= ImgWidth ) || ((j+ neighbourY ) >= ImgHeight ) ){
-                            //not valid neighbour
-                            //Log.d("Test","0");
+                        //check for validity else fill with the extended from the other side for X side
+                        int coordX, coordY;
+                        if (((i-totalBlur + neighbourX ) < 0 )) {
+                            coordX = ImgWidth - 1;
+                        } else if ((i+ neighbourX ) >= ImgWidth ){
+                            coordX = 0;
                         } else {
-                            //Log.d("test counter", String.valueOf(counter));
-                            int pixelNeighbour = tempBitmap.getPixel(i - totalBlur + neighbourX,j - totalBlur + neighbourY);
-                            counter = counter + 1;
-                            if (neighbourX + neighbourY == 1 || neighbourX + neighbourY == 3){
-                                //direct neighbour
+                            coordX = i - totalBlur + neighbourX;
+                        }
+                        //check for validity else fill with the extended from the other side for Y side
+                        if((j-totalBlur + neighbourY) < 0 ){
+                            coordY = ImgHeight - 1;
+                        } else if ((j+ neighbourY ) >= ImgHeight ){
+                            coordY = 0;
+                        } else {
+                            coordY = j-totalBlur + neighbourY;
+                        }
 
-                                totalRed = totalRed + (int) (Color.red(pixelNeighbour)/directNeighbour);
-                                //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
-                                totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/directNeighbour);
-                                //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
-                                totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/directNeighbour);
-                                //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
+                        //Start to blur
+                        int pixelNeighbour = tempBitmap.getPixel(coordX,coordY);
+                        counter = counter + 1;
+                        if (neighbourX + neighbourY == 1 || neighbourX + neighbourY == 3){
+                            //direct neighbour
 
-                            } else if (neighbourX == 1 && neighbourY == 1){
-                                //current pixel
+                            totalRed = totalRed + (int) (Color.red(pixelNeighbour)/directNeighbour);
+                            //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
+                            totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/directNeighbour);
+                            //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
+                            totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/directNeighbour);
+                            //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
 
-                                totalRed = totalRed + (int) (Color.red(pixelNeighbour)/currentPixelDiv);
-                                //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
-                                totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/currentPixelDiv);
-                                //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
-                                totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/currentPixelDiv);
-                                //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
-                            } else {
-                                //diagonal neighbour
+                        } else if (neighbourX == 1 && neighbourY == 1){
+                            //current pixel
 
-                                totalRed = totalRed + (int) (Color.red(pixelNeighbour)/diagonalNeighbour);
-                                //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
-                                totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/diagonalNeighbour);
-                                //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
-                                totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/diagonalNeighbour);
-                                //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
-                            }
+                            totalRed = totalRed + (int) (Color.red(pixelNeighbour)/currentPixelDiv);
+                            //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
+                            totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/currentPixelDiv);
+                            //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
+                            totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/currentPixelDiv);
+                            //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
+                        } else {
+                            //diagonal neighbour
 
+                            totalRed = totalRed + (int) (Color.red(pixelNeighbour)/diagonalNeighbour);
+                            //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
+                            totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)/diagonalNeighbour);
+                            //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
+                            totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)/diagonalNeighbour);
+                            //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
                         }
                     }
                 }
