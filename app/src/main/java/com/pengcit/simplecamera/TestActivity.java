@@ -65,7 +65,7 @@ public class TestActivity extends AppCompatActivity{
         Button filterbut = (Button)findViewById(R.id.filterbutton);
         Button smoothbut = (Button)findViewById(R.id.smoothbutton);
         Button FaceRecogbut = (Button)findViewById(R.id.buttonFaceRecog);
-        imgIdentitas = (ImageView)findViewById(R.id.imgIdentitasOCR);
+        imgIdentitas = (ImageView)findViewById(R.id.imgFace);
         imgHistogram = (ImageView)findViewById(R.id.imgHistogram);
         seekBarTop = (SeekBar)findViewById(R.id.seekBarTop);
         seekBarLeft = (SeekBar)findViewById(R.id.seekBarLeft);
@@ -162,7 +162,9 @@ public class TestActivity extends AppCompatActivity{
     }
 
     public void FaceRecog(){
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, FaceRecog.class);
+        intent.putExtra("bitmap",_bitmap);
+        TestActivity.this.startActivity(intent);
     }
 
     public void startCamera(){

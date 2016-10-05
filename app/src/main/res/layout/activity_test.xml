@@ -18,7 +18,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
     <ImageView
-        android:id="@+id/imgIdentitasOCR"
+        android:id="@+id/imgFace"
         android:layout_width="250dp"
         android:layout_height="250dp"
         android:src="@mipmap/ic_upload_picture"
@@ -61,10 +61,10 @@
         android:id="@+id/seekBarTop"
         android:layout_marginTop="25dp"
         android:layout_below="@+id/filterbutton"
-        android:layout_alignLeft="@+id/imgIdentitasOCR"
-        android:layout_alignStart="@+id/imgIdentitasOCR"
-        android:layout_alignRight="@+id/imgIdentitasOCR"
-        android:layout_alignEnd="@+id/imgIdentitasOCR"
+        android:layout_alignLeft="@+id/imgFace"
+        android:layout_alignStart="@+id/imgFace"
+        android:layout_alignRight="@+id/imgFace"
+        android:layout_alignEnd="@+id/imgFace"
         android:max="100"
         android:progress="100"
         android:indeterminate="false" />
@@ -114,7 +114,7 @@
         android:layout_height="wrap_content"
         android:text="Face Recog"
         android:id="@+id/buttonFaceRecog"
-        android:layout_below="@+id/imgIdentitasOCR"
+        android:layout_below="@+id/imgFace"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 

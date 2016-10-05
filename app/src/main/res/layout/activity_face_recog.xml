@@ -1,41 +1,78 @@
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".TestActivity"
-    android:layout_below="@+id/view"
-    android:layout_alignParentRight="true"
-    android:layout_alignParentEnd="true">
+    android:fitsSystemWindows="true"
+    tools:context="com.wordpress.bytedebugger.simplecamera.MenuBar">
 
-    <Button
-        android:layout_width="wrap_content"
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Take Photo Button"
-        android:id="@+id/photobutton"
-        android:layout_above="@+id/imgIdentitasOCR"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimaryDark"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="100dp"
+        tools:context=".TestActivity"
+        android:layout_below="@+id/view"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
+
+
     <ImageView
-        android:id="@+id/imgIdentitasOCR"
-        android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:layout_centerInParent="true"
-        android:src="@mipmap/ic_upload_picture" />
+        android:id="@+id/imgFace"
+        android:src="@mipmap/ic_upload_picture"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_width="match_parent" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Photo"
-        android:id="@+id/selectbutton"
+        android:text="Detect Face"
+        android:id="@+id/detectbutton"
         android:layout_alignBottom="@+id/photobutton"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_toRightOf="@+id/photobutton"
         android:layout_toEndOf="@+id/photobutton"
         android:layout_alignTop="@+id/photobutton" />
-</RelativeLayout>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apply"
+            android:id="@+id/buttonApply"
+            android:layout_gravity="right|top" />
+
+        <Spinner
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/spinnerFilter"
+            android:layout_gravity="center_horizontal|top"
+            android:spinnerMode="dialog" />
+
+    </FrameLayout>
+
+
+</android.support.design.widget.CoordinatorLayout>
