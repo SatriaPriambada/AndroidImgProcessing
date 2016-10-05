@@ -45,6 +45,7 @@ public class TestActivity extends AppCompatActivity{
     private final int SELECT_FILE = 101;
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 80;
     private SeekBar seekBarTop,seekBarLeft, seekBarRight;
+    private float ArrayInt[][] = new float[3][3];
     Uri _selectedImageUri;
     public static Bitmap _bitmap;
     float maxElmt;
@@ -63,6 +64,7 @@ public class TestActivity extends AppCompatActivity{
         Button selectbut = (Button)findViewById(R.id.selectbutton);
         Button filterbut = (Button)findViewById(R.id.filterbutton);
         Button smoothbut = (Button)findViewById(R.id.smoothbutton);
+        Button FaceRecogbut = (Button)findViewById(R.id.buttonFaceRecog);
         imgIdentitas = (ImageView)findViewById(R.id.imgIdentitasOCR);
         imgHistogram = (ImageView)findViewById(R.id.imgHistogram);
         seekBarTop = (SeekBar)findViewById(R.id.seekBarTop);
@@ -93,6 +95,12 @@ public class TestActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 SmoothImage();
+            }
+        });
+        FaceRecogbut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FaceRecog();
             }
         });
         seekBarTop.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -151,6 +159,10 @@ public class TestActivity extends AppCompatActivity{
                 rerenderImage();
             }
         });
+    }
+
+    public void FaceRecog(){
+        Intent intent = new Intent(this, MainActivity.class);
     }
 
     public void startCamera(){
@@ -385,8 +397,73 @@ public class TestActivity extends AppCompatActivity{
         diagonalNeighbour = Integer.valueOf(listText[0]);
         directNeighbour = Integer.valueOf(listText[1]);
         currentPixelDiv = Integer.valueOf(listText[2]);
-
     }
+
+    private void readMatrix(String filename){
+        //Find the directory for the SD Card using the API
+        //*Don't* hardcode "/sdcard"
+        File sdcard = Environment.getExternalStorageDirectory();
+        //Get the text file
+        File file = new File(sdcard,filename);
+        Log.d("tio",file.toString());
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+            // Should we show an explanation?
+            Log.d("tio","Check if permission not yet given");
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                Log.d("tio","Permission need any explanation given");
+                // Show an expanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                Log.d("tio","Permission not need any explanation given");
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+
+        } else {
+
+            Log.d("tio","Permission has been given");
+        }
+
+        //Read text from file
+        StringBuilder text = new StringBuilder();
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                text.append(line);
+            }
+            br.close();
+        }
+
+        catch (IOException e) {
+            //You'll need to add proper error handling here
+            Log.d("ERROR",e.toString());
+        }
+
+        Log.d("text", text.toString());
+        String[] listText = text.toString().split(",");
+        fillMatrix(listText);
+    }
+
+    public void fillMatrix(String[] list){
+        for (int i = 0; i < list.length; i++){
+            ArrayInt[i / 3 ][i % 3] = Float.valueOf(list[i]);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -588,6 +665,12 @@ public class TestActivity extends AppCompatActivity{
                         .show();
                 readFile("blur.txt");
                 blurImage();
+                break;
+            // action with ID action_settings was selected
+            case R.id.level1:
+                Toast.makeText(this, "Level 1 selected", Toast.LENGTH_SHORT)
+                        .show();
+                readMatrix("OpRobert.txt");
                 break;
             // action with ID action_settings was selected
             case R.id.other:
@@ -792,6 +875,74 @@ public class TestActivity extends AppCompatActivity{
                                 //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
                             }
 
+                        }
+                    }
+                }
+                Log.d("TotalColor", "R:" + String.valueOf(totalRed) +",G:" + String.valueOf(totalGreen) +",B:" + String.valueOf(totalBlue) );
+
+                //Log.d("NewColor", "R:" + String.valueOf(avgRed) +",G:" + String.valueOf(avgGreen) +",B:" + String.valueOf(avgBlue) );
+                //normalize color
+                if (totalBlue < 0){
+                    totalBlue = 0;
+                }
+                if (totalGreen < 0){
+                    totalGreen = 0;
+                }
+                if (totalRed < 0) {
+                    totalRed = 0;
+                }
+
+                if (totalBlue >255){
+                    totalBlue = 255;
+                }
+                if (totalGreen >255){
+                    totalGreen = 255;
+                }
+                if (totalRed >255) {
+                    totalRed = 255;
+                }
+                Color NewColour = new Color();
+                int pixel = NewColour.rgb(totalRed, totalGreen, totalBlue);
+                resBitmap.setPixel(i, j, pixel);
+            }
+        }
+        Log.d("Finish", "Sharpen finished");
+        imgIdentitas.setImageBitmap(resBitmap);
+        drawHistogram(resBitmap);
+    }
+
+    public void OperatorLevel1(){
+        int totalBlur = 1;
+        Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        int ImgWidth = tempBitmap.getWidth();
+        int ImgHeight = tempBitmap.getHeight();
+        int cellSize = (2*totalBlur) + 1;
+        int counter, totalRed = 0, totalGreen = 0, totalBlue = 0;
+
+        for (int i = 0; i < ImgWidth; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                //Check for neighbour
+                counter = 0;
+                totalRed = 0; totalGreen = 0; totalBlue = 0;
+
+                //Log.d("Pixel",String.valueOf(i) + "," + String.valueOf(j));
+                for(int neighbourX = 0; neighbourX < cellSize; neighbourX++){
+                    for(int neighbourY = 0; neighbourY < cellSize; neighbourY++){
+                        //check for validity else fill with 0 and ignore
+                        if (((i-totalBlur + neighbourX ) < 0 ) || ((j-totalBlur + neighbourY) < 0 ) || ((i+ neighbourX ) >= ImgWidth ) || ((j+ neighbourY ) >= ImgHeight ) ){
+                            //not valid neighbour
+                            //Log.d("Test","0");
+                        } else {
+                            //Log.d("test counter", String.valueOf(counter));
+                            int pixelNeighbour = tempBitmap.getPixel(i - totalBlur + neighbourX,j - totalBlur + neighbourY);
+                            counter = counter + 1;
+                            totalRed = totalRed + (int) (Color.red(pixelNeighbour)*ArrayInt[neighbourX][neighbourY]);
+                            //Log.d("tempRed", String.valueOf( Color.red(pixelNeighbour)));
+                            totalGreen = totalGreen + (int) (Color.green(pixelNeighbour)*directNeighbour);
+                            //Log.d("tempG", String.valueOf( Color.green(pixelNeighbour)));
+                            totalBlue = totalBlue + (int) (Color.blue(pixelNeighbour)*directNeighbour);
+                            //Log.d("tempB", String.valueOf( Color.blue(pixelNeighbour)));
                         }
                     }
                 }

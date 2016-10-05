@@ -42,8 +42,9 @@
         android:layout_height="wrap_content"
         android:text="LookUp Grayscale"
         android:id="@+id/filterbutton"
-        android:layout_below="@+id/imgIdentitasOCR"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignTop="@+id/buttonFaceRecog"
+        android:layout_toRightOf="@+id/buttonFaceRecog"
+        android:layout_toEndOf="@+id/buttonFaceRecog" />
 
     <Button
         android:layout_width="wrap_content"
@@ -107,6 +108,15 @@
         android:layout_toLeftOf="@+id/smoothbutton"
         android:layout_toStartOf="@+id/smoothbutton"
         android:layout_alignParentBottom="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Face Recog"
+        android:id="@+id/buttonFaceRecog"
+        android:layout_below="@+id/imgIdentitasOCR"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 
 </RelativeLayout>
