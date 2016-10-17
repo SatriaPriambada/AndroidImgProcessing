@@ -47,7 +47,7 @@ public class TestActivity extends AppCompatActivity{
     private SeekBar seekBarTop,seekBarLeft, seekBarRight;
     private float ArrayInt[][] = new float[3][3];
     Uri _selectedImageUri;
-    public static Bitmap _bitmap;
+    public static Bitmap _bitmap, grayscaleBitmap;
     float maxElmt;
     int newValueLeft=100, newValueTop=100, newValueRight=100;
     int directNeighbour, currentPixelDiv, diagonalNeighbour;
@@ -88,6 +88,8 @@ public class TestActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 FilterImage();
+                imgIdentitas.setImageBitmap(grayscaleBitmap);
+                drawHistogram(grayscaleBitmap);
             }
         });
 
@@ -163,7 +165,7 @@ public class TestActivity extends AppCompatActivity{
 
     public void FaceRecog(){
         Intent intent = new Intent(this, FaceRecog.class);
-        intent.putExtra("bitmap",_bitmap);
+        intent.putExtra("bitmap",grayscaleBitmap);
         TestActivity.this.startActivity(intent);
     }
 
@@ -205,8 +207,7 @@ public class TestActivity extends AppCompatActivity{
             }
         }
         Log.d("Finish", "Process finished");
-        imgIdentitas.setImageBitmap(tempBitmap);
-        drawHistogram(tempBitmap);
+        grayscaleBitmap = tempBitmap;
     }
 
     public void drawHistogram(Bitmap histBitmap){
@@ -557,6 +558,7 @@ public class TestActivity extends AppCompatActivity{
                     _bitmap = BitmapFactory.decodeStream(image_stream);
 
                     Bitmap _processed = _bitmap;
+                    FilterImage();
 
                     int nh = (int) (_bitmap.getHeight() * (1024.0 / _processed.getWidth()));
 //                    Bitmap scaled = Bitmap.createScaledBitmap(_bitmap, 1024, nh, true);
@@ -581,9 +583,9 @@ public class TestActivity extends AppCompatActivity{
                     _bitmap = BitmapFactory.decodeStream(image_stream);
 
                     Bitmap _processed = _bitmap;
+                    FilterImage();
 
                     int nh = (int) (_bitmap.getHeight() * (1024.0 / _processed.getWidth()));
-//                    Bitmap scaled = Bitmap.createScaledBitmap(_bitmap, 1024, nh, true);
                     Bitmap scaled = Bitmap.createScaledBitmap(_processed, 1024, nh, true);
 
 //                    imgIdentitas.setImageBitmap(Utils.decodeSampledBitmapFromResource(outputURI.getPath(), 300, 300));
@@ -672,7 +674,6 @@ public class TestActivity extends AppCompatActivity{
             case R.id.level1:
                 Toast.makeText(this, "Level 1 selected", Toast.LENGTH_SHORT)
                         .show();
-                readMatrix("OpRobert.txt");
                 break;
             // action with ID action_settings was selected
             case R.id.other:
@@ -986,7 +987,6 @@ public class TestActivity extends AppCompatActivity{
         Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
         int ImgWidth = tempBitmap.getWidth();
         int ImgHeight = tempBitmap.getHeight();
-        int[] pix = new int[ImgWidth * ImgHeight];
         int cellSize = (2*totalBlur) + 1;
         int counter, totalRed = 0, totalGreen = 0, totalBlue = 0;
 
