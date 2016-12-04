@@ -15,9 +15,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
+
+import org.openalpr.OpenALPR;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CharRecognitionActivity extends AppCompatActivity {
 
@@ -34,8 +40,9 @@ public class CharRecognitionActivity extends AppCompatActivity {
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 80;
     public static Bitmap _bitmap;
     TextView stringCodeText;
+    EditText lowPass, highPass;
     Uri _selectedImageUri;
-    ImageView imgIdentitas;
+    ImageView imgIdentitas, imgFreqFourier;
     int maxString = 99999;
     int stringCode[] = new int[maxString];
     String filename = new String();
@@ -58,9 +65,13 @@ public class CharRecognitionActivity extends AppCompatActivity {
         Button recogbut = (Button)findViewById(R.id.charRecogbutton);
         Button skeletonbut = (Button)findViewById(R.id.Skeletonbutton);
         Button findfacebut = (Button)findViewById(R.id.findface_button);
+        Button fourierbut = (Button)findViewById(R.id.fourier_button);
+        Button platebut = (Button)findViewById(R.id.recog_button);
         imgIdentitas = (ImageView)findViewById(R.id.imgFace);
-
+        imgFreqFourier = (ImageView)findViewById(R.id.fourierFreq);
         stringCodeText = (TextView) findViewById(R.id.stringCodeText);
+        lowPass = (EditText) findViewById(R.id.lowPass);
+        highPass = (EditText) findViewById(R.id.highPass);
 
         photobut.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,6 +96,20 @@ public class CharRecognitionActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 FindFace();
+            }
+        });
+
+        platebut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                RecogPlate();
+            }
+        });
+
+        fourierbut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Fourier();
             }
         });
 
@@ -358,7 +383,19 @@ public class CharRecognitionActivity extends AppCompatActivity {
 
     }
 
+    public void RecogPlate(){
 
+        final String ANDROID_DATA_DIR = this.getApplicationInfo().dataDir;
+        final String openAlprConfFile = ANDROID_DATA_DIR + File.separatorChar + "runtime_data" + File.separatorChar + "openalpr.conf";
+
+        String result = OpenALPR.Factory.create(this, ANDROID_DATA_DIR).recognizeWithCountryRegionNConfig("eu", "", _selectedImageUri.getPath(), openAlprConfFile, 10);
+        Gson g = new Gson();
+        Map<String, Object>  currJSON = g.fromJson(result, Map.class);
+        //Log.d("result", result);
+        String plateNum = ((Map) ((List) currJSON.get("results")).get(0)).get("plate").toString();
+        stringCodeText.setText(plateNum);
+        //stringCodeText.setText(result);
+    }
     public void skeletonizeCode() {
         Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Bitmap resultBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -542,6 +579,92 @@ public class CharRecognitionActivity extends AppCompatActivity {
         Log.d("Finish", "FindFace finished");
         imgIdentitas.setImageBitmap(resultBitmap);
         stringCodeText.setText("Jumlah Wajah : " + counterFace);
+    }
+
+    public void Fourier(){
+        Bitmap tempBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resultBitmap = _bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        int ImgWidth = tempBitmap.getWidth();
+        int ImgHeight = tempBitmap.getHeight();
+        Paint paint = new Paint();
+        Complex[] pixels = new Complex[ImgHeight * ImgWidth];
+        paint.setColor(Color.RED);
+        FFT transformer = new FFT();
+        //paint.setStyle(Paint.Style.STROKE);
+        int borderWidth = 0, borderHeight = 0, counterFace = 0;
+        Canvas myCanvas = new Canvas(resultBitmap);
+        boolean first = true;
+        for (int i = 0; i < ImgWidth ; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                int pixel = tempBitmap.getPixel(i, j);
+                int r = Color.red(pixel);
+                int g = Color.green(pixel);
+                int b = Color.blue(pixel);
+
+                pixels[i * ImgHeight + j] = new Complex((int) (0.299 * r + 0.587 * g + 0.114 * b), 0);
+            }
+        }
+        Complex[] frequency_pixels = transformer.fft(pixels);
+        Complex[] convolved_pixels = transformer.cconvolve(frequency_pixels, frequency_pixels);
+        Complex[] z_picture = transformer.ifft(frequency_pixels);
+        int max_magnitude = -9999999;
+        int max_magnitude_z = -9999999;
+        //find the max magnitude of power
+        for (int i = 0; i < ImgWidth ; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                //count the freq image
+                double real = convolved_pixels[i * ImgWidth + j].re();
+                double imaginer = convolved_pixels[i * ImgWidth + j].im();
+                int magnitude = (int) (Math.sqrt(real * real + imaginer * imaginer) );
+                if (magnitude > max_magnitude){
+                    max_magnitude = magnitude;
+                }
+            }
+        }
+        boolean isUsingFilter = false;
+        int limitLow = 0;
+        int limitHigh = 99999;
+        if (lowPass.getText().toString().equals("low:") || highPass.getText().toString().equals("high:")){
+            stringCodeText.setText("No filter");
+        } else {
+            isUsingFilter = true;
+            limitLow = Integer.valueOf(lowPass.getText().toString());
+            limitHigh = Integer.valueOf(highPass.getText().toString());
+        }
+        for (int i = 0; i < ImgWidth ; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                Color NewColour = new Color();
+                //draw the freq image
+                double real = convolved_pixels[i * ImgWidth + j].re();
+                double imaginer = convolved_pixels[i * ImgWidth + j].im();
+                double magnitude =  (Math.sqrt(real * real + imaginer * imaginer) );
+                int color = (int) magnitude/max_magnitude * 255;
+                int pixel = NewColour.rgb(color , color, color);
+                resultBitmap.setPixel(i, j, pixel);
+
+                //draw the z image
+
+
+                real = z_picture[i * ImgWidth + j].re();
+                imaginer = z_picture[i * ImgWidth + j].im();
+                magnitude =  (Math.sqrt(real * real + imaginer * imaginer) );
+                if(isUsingFilter) {
+                    if (real > limitLow && real < limitHigh) {
+                        color = (int) magnitude;
+                    } else {
+                        color = 0;
+                    }
+                } else {
+                    color = (int) magnitude;
+                }
+                pixel = NewColour.rgb(color , color, color);
+                tempBitmap.setPixel(i, j, pixel);
+            }
+        }
+
+        Log.d("Finish", "FindFace finished");
+        imgIdentitas.setImageBitmap(tempBitmap);
+        imgFreqFourier.setImageBitmap(resultBitmap);
     }
 
 

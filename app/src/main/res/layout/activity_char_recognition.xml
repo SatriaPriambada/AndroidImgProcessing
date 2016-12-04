@@ -54,7 +54,8 @@
         android:id="@+id/stringCodeText"
         android:layout_below="@+id/charRecogbutton"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="56dp" />
 
     <Button
         android:layout_width="wrap_content"
@@ -72,6 +73,52 @@
         android:layout_above="@+id/stringCodeText"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fourier"
+        android:id="@+id/fourier_button"
+        android:layout_below="@+id/findface_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:id="@+id/fourierFreq"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:src="@mipmap/ic_upload_picture"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/photobutton"
+        android:layout_toRightOf="@+id/photobutton"
+        android:layout_alignTop="@+id/fourier_button" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/lowPass"
+        android:layout_below="@+id/stringCodeText"
+        android:layout_toRightOf="@+id/highPass"
+        android:layout_toEndOf="@+id/highPass"
+        android:text="low:" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/highPass"
+        android:text="high:"
+        android:layout_alignBottom="@+id/lowPass"
+        android:layout_alignRight="@+id/fourier_button"
+        android:layout_alignEnd="@+id/fourier_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Plate"
+        android:id="@+id/recog_button"
+        android:layout_alignBottom="@+id/fourier_button"
+        android:layout_toRightOf="@+id/fourier_button"
+        android:layout_toEndOf="@+id/fourier_button" />
 
 
 </RelativeLayout>
