@@ -235,13 +235,14 @@ public class TestActivity extends AppCompatActivity{
         Paint paint = new Paint();
         paint.setColor(Color.WHITE);
         maxElmt = 0;
+        //normalized if there is element so high tmake this elt as basic detor
         for (Map.Entry<Object, Integer> entry : c.entrySet()) {
-            System.out.println(entry.getKey() + " - " + entry.getValue());
+            //System.out.println(entry.getKey() + " - " + entry.getValue());
             if (entry.getValue() > maxElmt){
                 maxElmt = entry.getValue();
             }
         }
-
+        //draw to bitmap
         for(Map.Entry<Object, Integer> entry: c.entrySet()){
             float heightBin = (entry.getValue()/maxElmt * 200);
             float colorBin;

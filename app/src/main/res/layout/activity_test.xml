@@ -43,8 +43,7 @@
         android:text="LookUp Grayscale"
         android:id="@+id/filterbutton"
         android:layout_alignTop="@+id/buttonFaceRecog"
-        android:layout_toRightOf="@+id/buttonFaceRecog"
-        android:layout_toEndOf="@+id/buttonFaceRecog" />
+        android:layout_toRightOf="@+id/buttonFaceRecog" />
 
     <Button
         android:layout_width="wrap_content"
@@ -53,7 +52,9 @@
         android:id="@+id/smoothbutton"
         android:layout_alignTop="@+id/filterbutton"
         android:layout_alignRight="@+id/selectbutton"
-        android:layout_alignEnd="@+id/selectbutton" />
+        android:layout_alignEnd="@+id/selectbutton"
+        android:layout_alignLeft="@+id/seekBarRight"
+        android:layout_alignStart="@+id/seekBarRight" />
 
     <SeekBar
         android:layout_width="wrap_content"

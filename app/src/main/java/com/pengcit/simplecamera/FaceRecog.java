@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -30,10 +32,15 @@ import java.io.IOException;
  */
 public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     public static Bitmap FaceRecogBitmap;
+    public static Bitmap nextBitmap;
     private int matrixSize = 3;
     private  float[][] matrix = new float[matrixSize][matrixSize];
     private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 80;
+
     ImageView imgFace;
+    TextView textGratioKepala, textGratioMata, textStringcode;
+    int maxString = 99999;
+    int stringCode[] = new int[maxString];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +54,9 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
         Intent intent = getIntent();
         FaceRecogBitmap = (Bitmap) intent.getParcelableExtra("bitmap");
         imgFace = (ImageView)findViewById(R.id.imgFace);
+        textGratioKepala = (TextView)findViewById(R.id.GratioKepala);
+        textGratioMata = (TextView)findViewById(R.id.GratioMata);
+        textStringcode = (TextView)findViewById(R.id.StringCodeFace);
         if (imgFace != null){
             imgFace.setImageBitmap(FaceRecogBitmap);
         }
@@ -66,24 +76,96 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
         detectbut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FilterImage();
+                FilterFaceImage();
             }
         });
 
         applybut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ApplyFilter();
+                CharRecog();
             }
         });
     }
 
-    public void ApplyFilter(){
-        Toast.makeText(getApplicationContext(), "Apply Filter", Toast.LENGTH_SHORT).show();
+    public void CharRecog(){
+        Intent i = new Intent(this, CharRecognitionActivity.class);
+        this.startActivity(i);
     }
 
-    public void FilterImage(){
+    public void FilterFaceImage(){
         Toast.makeText(getApplicationContext(), "Detect Face", Toast.LENGTH_SHORT).show();
+        Bitmap bMap = BitmapFactory.decodeFile("/sdcard/MaskMuka.png");
+        Bitmap tempBitmap = FaceRecogBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap resultBitmap = FaceRecogBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        int ImgWidth = tempBitmap.getWidth();
+        int ImgHeight = tempBitmap.getHeight();
+        Robinson3();
+        Otsu(true);
+        int[] listMarker = new int[10];
+        int couterStringCode = 0;
+        imgFace.setImageBitmap(nextBitmap);
+        for (int i = 0; i < ImgWidth ; i++) {
+            for (int j = 0; j < ImgHeight ; j++) {
+                int pixel = nextBitmap.getPixel(i,j);
+                int redPixel = Color.red(pixel);
+
+                int bMappixel = bMap.getPixel(i, j);
+                int alpha = Color.alpha(bMappixel);
+                Color NewColour = new Color();
+                int newpixel;
+                //invert otsu
+                if(redPixel == 0){
+                    newpixel = NewColour.rgb(255, 255, 255);
+                } else {
+                    newpixel = NewColour.rgb(0, 0, 0);
+                }
+
+                tempBitmap.setPixel(i, j, newpixel);
+
+                if (alpha == 255){
+                    newpixel = NewColour.rgb(0, 0, 0);
+                    tempBitmap.setPixel(i,j,newpixel);
+
+                    //Check for string code
+                    stringCode[couterStringCode] = ((i+j) % 9) + 1;
+                    ++couterStringCode;
+                }
+            }
+        }
+        int borderMiddle = (int) (ImgWidth/2);
+        int Iter = 0;
+        for (int searchBorder = 0; searchBorder < ImgHeight; searchBorder++) {
+
+            int bMappixel = bMap.getPixel(borderMiddle,searchBorder );
+            int alpha = Color.alpha(bMappixel);
+            if (alpha == 255){
+
+                //Check for marker
+                listMarker[Iter] = searchBorder;
+                ++Iter;
+            }
+        }
+        imgFace.setImageBitmap(tempBitmap);
+        for (int i = 0; i < listMarker.length; i++) {
+            System.out.println("ListMarker [" + i + "] " + listMarker[i]);
+        }
+        double upPart = (Math.abs(listMarker[0] - listMarker[5])) ;
+        double downPart = (Math.abs(listMarker[8] - listMarker[5]));
+        double GRatio = (double) (upPart/downPart) ;
+        textGratioKepala.setText("Kepala-Hidung-Dagu : " + String.valueOf(GRatio));
+        upPart = (Math.abs(listMarker[3] - listMarker[5])) ;
+        downPart = (Math.abs(listMarker[6] - listMarker[5]));
+        GRatio = (double) (upPart/downPart) ;
+        textGratioMata.setText("Mata-Hidung-Mulut : " + String.valueOf(GRatio));
+
+        String sc = "";
+        for (int i = 0; i < 100; i++) {
+            sc = sc + stringCode[i];
+        }
+        System.out.println("sc :" + sc);
+        textStringcode.setText("String Code : " + sc);
+
     }
 
     public void onItemSelected(AdapterView<?> parent, View view,
@@ -120,10 +202,15 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
             case 8:
                 Robinson5();
                 break;
+            case 9:
+                Otsu(false);
+                break;
             default:
                 break;
         }
     }
+
+
 
     public void Robert(){
         Toast.makeText(getApplicationContext(), "Robert Convolution", Toast.LENGTH_SHORT).show();
@@ -888,6 +975,7 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
         }
         Log.d("Finish", "Robinson3 finished");
         imgFace.setImageBitmap(resultBitmap);
+        nextBitmap = resultBitmap;
     }
 
     public void Robinson5(){
@@ -1073,13 +1161,94 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
 
     }
 
-    private void printMatrix(){
-        for (int i = 0; i < matrixSize; i++) {
-            for (int j = 0; j < matrixSize ; j++) {
-                System.out.print(matrix[i][j] + " ");
-            }
-            System.out.println();
+    //code taken from http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html with modification for android
+    public void Otsu(boolean next){
+        int histData[] = new int[256];
+        // Calculate histogram
+        int ptr = 0;
+        Bitmap tempBitmap;
+        if (next) {
+
+            tempBitmap = nextBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        } else {
+
+            tempBitmap = FaceRecogBitmap.copy(Bitmap.Config.ARGB_8888, true);
         }
+        int red,green,blue,alpha, totalRed = 0, totalGreen = 0, totalBlue = 0;
+        int ImgWidth = FaceRecogBitmap.getWidth();
+        int ImgHeight = FaceRecogBitmap.getHeight();
+        for (int i = 0; i < ImgWidth; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                int colour = tempBitmap.getPixel(i,j);
+                red = Color.red(colour);
+                green = Color.green(colour);
+                blue = Color.blue(colour);
+                //String msg = "R: "+ red + " G: " + green + " B: " + blue;
+                //Log.d("Color",msg);
+                int avgColor = (int) (0.299f * red + 0.587f * green + 0.114f * blue);
+                histData[avgColor] ++;
+            }
+        }
+
+        // Total number of pixels
+        int total = ImgHeight * ImgWidth;
+
+        float sum = 0;
+        for (int t=0 ; t<256 ; t++) sum += t * histData[t];
+
+        float sumB = 0;
+        int wB = 0;
+        int wF = 0;
+
+        float varMax = 0;
+        int threshold = 0;
+
+        for (int t=0 ; t<256 ; t++) {
+            wB += histData[t];               // Weight Background
+            if (wB == 0) continue;
+
+            wF = total - wB;                 // Weight Foreground
+            if (wF == 0) break;
+
+            sumB += (float) (t * histData[t]);
+
+            float mB = sumB / wB;            // Mean Background
+            float mF = (sum - sumB) / wF;    // Mean Foreground
+
+            // Calculate Between Class Variance
+            float varBetween = (float)wB * (float)wF * (mB - mF) * (mB - mF);
+
+            // Check if new maximum found
+            if (varBetween > varMax) {
+                varMax = varBetween;
+                threshold = t;
+            }
+        }
+
+        System.out.println("Threshold : " + threshold);
+        for (int i = 0; i < ImgWidth; i++) {
+            for (int j = 0; j < ImgHeight; j++) {
+                int colour = tempBitmap.getPixel(i,j);
+                red = Color.red(colour);
+                green = Color.green(colour);
+                blue = Color.blue(colour);
+                //String msg = "R: "+ red + " G: " + green + " B: " + blue;
+                //Log.d("Color",msg);
+                int avgColor = (int) (0.299f * red + 0.587f * green + 0.114f * blue);
+                Color NewColour = new Color();
+                int pixel = 0;
+
+                if (avgColor < threshold){
+                    pixel = NewColour.rgb(0, 0, 0);
+                } else {
+                    pixel = NewColour.rgb(255, 255, 255);
+                }
+
+                tempBitmap.setPixel(i, j, pixel);
+            }
+        }
+        imgFace.setImageBitmap(tempBitmap);
+        nextBitmap = tempBitmap;
     }
 
     public void rotateMatrix(){
@@ -1122,4 +1291,7 @@ public class FaceRecog extends AppCompatActivity implements AdapterView.OnItemSe
         matrix[0][1] = temp;
     }
 
+
 }
+
+

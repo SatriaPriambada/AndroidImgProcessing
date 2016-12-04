@@ -47,7 +47,7 @@
         android:layout_width="match_parent" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:layout_width="97dp"
         android:layout_height="wrap_content"
         android:text="Detect Face"
         android:id="@+id/detectbutton"
@@ -59,18 +59,44 @@
         android:layout_alignTop="@+id/photobutton" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="101dp"
             android:layout_height="wrap_content"
-            android:text="Apply"
+            android:text="CharRecognition"
             android:id="@+id/buttonApply"
             android:layout_gravity="right|top" />
 
         <Spinner
-            android:layout_width="130dp"
-            android:layout_height="wrap_content"
+            android:layout_width="132dp"
+            android:layout_height="53dp"
             android:id="@+id/spinnerFilter"
             android:layout_gravity="center_horizontal|top"
-            android:spinnerMode="dialog" />
+            android:spinnerMode="dialog"
+            android:backgroundTint="#645f5f"
+            android:focusable="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="91dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Kepala-Hidung-Dagu"
+            android:id="@+id/GratioKepala"
+            android:layout_gravity="left|bottom" />
+
+        <TextView
+            android:layout_width="167dp"
+            android:layout_height="53dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Mata-Hidung-Mulut"
+            android:id="@+id/GratioMata"
+            android:layout_gravity="left|bottom" />
+
+        <TextView
+            android:layout_width="149dp"
+            android:layout_height="121dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="String Code:"
+            android:id="@+id/StringCodeFace"
+            android:layout_gravity="right|bottom" />
 
     </FrameLayout>
 

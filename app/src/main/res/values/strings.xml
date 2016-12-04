@@ -5,13 +5,15 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_menu_bar">MenuBar</string>
     <string-array name="filterChoice_array">
-        <item>1.Robert</item>
+        <item>Select Conv</item>
         <item>1.Prewitt</item>
         <item>1.Sobel</item>
-        <item>1.Fraychen</item>
+        <item>1.Frei-chen</item>
+        <item>1.Robert</item>
         <item>2.Prewitt 8</item>
         <item>2.Kirch</item>
         <item>2.Robinson3</item>
         <item>2.Robinson5</item>
+        <item>Otsu</item>
     </string-array>
 </resources>
